@@ -1,4 +1,16 @@
 <?php
+
+use CountryApi\CountryApi;
+
+require '../../vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
+$dotenv->load();
+
+$countryApi = new CountryApi();
+
+$countryApi->all();
+
 /**
  * This is a template php file for your countries search.
  * Use as you will, or start over. It's up to you.
