@@ -1,0 +1,10 @@
+{
+    "name": "mdraper/fullstack-template",
+    "authors": [
+        {
+            "name": "Matthew Draper",
+            "email": "matt_draper@outlook.com"
+        }
+    ],
+    "require": {}
+}

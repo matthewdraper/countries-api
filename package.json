@@ -1,0 +1,19 @@
+{
+  "name": "fullstack-template",
+  "version": "1.0.0",
+  "description": "## How to use The files included in this repository are here to get you started by giving you an idea on how you might start the project.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/infoseci/fullstack-template.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/infoseci/fullstack-template/issues"
+  },
+  "homepage": "https://github.com/infoseci/fullstack-template#readme"
+}
