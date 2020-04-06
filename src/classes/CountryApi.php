@@ -20,9 +20,9 @@ class CountryApi
         $this->client = new Client();
     }
 
-    public function all($fields = [])
+    public function all($fields = [], $orderBy = null)
     {
-        $this->generateResponse(getenv('COUNTRY_API_URL') . '/all', $fields);
+        $this->generateResponse(getenv('COUNTRY_API_URL') . '/all', $fields, $orderBy);
     }
 
     public function name($name, $fullName = false, $fields = [])
@@ -82,14 +82,14 @@ class CountryApi
         return !empty($fields) ? $url . '?fields=' . urlencode($fields) : $url;
     }
 
-    private function generateResponse($url, $fields = [], $expectedResponse = 200)
+    private function generateResponse($url, $fields = [], $orderBy, $expectedResponse = 200)
     {
         try {
             if(!empty($fields)){
                 $url .= '?fields=' . urlencode(implode(';', $fields));
             }
             $response = $this->makeApiRequest($url, $expectedResponse);
-            $this->generateJsonResponse($response);
+            $this->generateJsonResponse($response, $orderBy);
         } catch (\Exception $e) {
             $this->internalServerError($e);
         }
@@ -104,8 +104,28 @@ class CountryApi
         ]));
     }
 
-    private function generateJsonResponse($payload = [], $status = 200, $message = 'OK')
+    private function generateJsonResponse($payload = [], $orderBy = null, $status = 200, $message = 'OK')
     {
+        if(!empty($orderBy) && array_key_exists(array_key_first($orderBy), $payload[0])) {
+            $key = array_key_first($orderBy);
+            if(strtoupper($orderBy[$key] === 'ASC')) {
+                usort($payload, function ($a, $b) use ($orderBy, $key) {
+                    if($a->$key == $b->$key) {
+                        return 0;
+                    }
+                    return $a->$key < $b->$key ? -1 : 1;
+                });
+            } elseif(strtoupper($orderBy[array_key_first($orderBy)]) === 'DESC') {
+                usort($payload, function ($a, $b) use ($orderBy, $key) {
+                    if($a->$key == $b->$key) {
+                        return 0;
+                    }
+                    return $a->$key > $b->$key ? -1 : 1;
+                });
+            }
+
+        }
+
         http_response_code(intval($status));
         if(getenv('ENVIRONMENT') !== 'development') {
             die(json_encode([

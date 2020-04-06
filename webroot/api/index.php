@@ -16,8 +16,9 @@ $countryApi->all([
     'flag',
     'region',
     'subregion',
+    'population',
     'languages'
-]);
+], ['population' => 'DESC']);
 
 /**
  * This is a template php file for your countries search.

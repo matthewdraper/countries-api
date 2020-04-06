@@ -16,6 +16,7 @@ $countryApi->all([
     'flag',
     'region',
     'subregion',
+    'population',
     'languages'
 ]);
 
