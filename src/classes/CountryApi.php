@@ -82,9 +82,12 @@ class CountryApi
         return !empty($fields) ? $url . '?fields=' . urlencode($fields) : $url;
     }
 
-    private function generateResponse($url, $expectedResponse = 200)
+    private function generateResponse($url, $fields = [], $expectedResponse = 200)
     {
         try {
+            if(!empty($fields)){
+                $url .= '?fields=' . urlencode(implode(';', $fields));
+            }
             $response = $this->makeApiRequest($url, $expectedResponse);
             $this->generateJsonResponse($response);
         } catch (\Exception $e) {
@@ -152,6 +155,7 @@ class CountryApi
         if($statusCode !== $expectedStatusCode) {
             throw new InvalidApiResponseException("Invalid Country API Response: API returned a response with status code {$statusCode} instead of the expected status code of {$expectedStatusCode}");
         }
+
 
         return json_decode($response);
     }
