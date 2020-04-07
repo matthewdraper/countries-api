@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import Error from "./Error";
 import axios from 'axios';
+import '../sass/main.scss';
 
 class App extends Component{
 
@@ -31,15 +32,23 @@ class App extends Component{
         };
         return(
             <div className={'container'}>
-                <h1 className={'mt-5 mb-3'}>Country Search</h1>
+                <h1>Country Search</h1>
                 <Error text={this.state.errorMessage} />
-                <div className={'search-bar form-group my-3'}>
-                    <input placeholder={'Search by name or ISO abbreviation'} className={'search-bar__input form-control'} value={this.state.searchValue} onChange={evt => this.updateSearchValue(evt)} onMouseLeave={evt => this.updateSearchValue(evt)} onKeyPress={evt => this.keyPressed(evt)}/>
-                    <button className={'search-bar__input btn btn-primary'} onClick={evt => { this.search();}}><i className={'fas fa-search'}></i></button>
+                <div className={'search-bar form-group mb-3'}>
+                    <input placeholder={'Search by name or ISO abbreviation'}
+                           className={'search-bar__input form-control'} value={this.state.searchValue}
+                           onChange={evt => this.updateSearchValue(evt)}
+                           onMouseLeave={evt => this.updateSearchValue(evt)}
+                           onKeyPress={evt => this.keyPressed(evt)}
+                           onFocus={evt => this.searchFocus(evt)}
+                           onfocusout={evt => this.searchUnfocus(evt)}
+                    />
+                    <button className={'search-bar__button btn btn-primary'} onClick={evt => { this.search();}}><i className={'fas fa-search'}></i></button>
                 </div>
                 <div className={'h4 my-3'}>Countries</div>
-                <table className={'w-100 table table-bordered table-striped table-hover table-sm'}>
-                    <thead>
+                <div className={'country-table-wrap'}>
+                    <table className={'country-table w-100 table table-bordered table-striped table-hover table-sm'}>
+                        <thead>
                         <tr>
                             <th>Flag</th>
                             <th>Name</th>
@@ -49,42 +58,46 @@ class App extends Component{
                             <th>Region</th>
                             <th>Sub-Region</th>
                             <th>Languages</th>
-
                         </tr>
-                    </thead>
-                    <tbody>
+                        </thead>
+                        <tbody>
                         {this.state.countryTable.rows}
-                    </tbody>
-                </table>
-                <div className={'totals h4 my-5'}>Total Countries: {this.state.totalCountries}</div>
+                        </tbody>
+                    </table>
+                </div>
+                <div className={'totals h4 mt-3 mb-3'}>Total Countries - {this.state.totalCountries}</div>
                 <div className={'row'}>
                     <div className={'col'}>
                         <div className={'h4 mb-2'}>Regions</div>
-                        <table className={'w-100 table table-bordered table-striped table-hover table-sm'}>
-                            <thead>
+                        <div className={'regions-table-wrap'}>
+                            <table className={'w-100 table table-bordered table-striped table-hover table-sm'}>
+                                <thead>
                                 <tr>
                                     <th>Name</th>
                                     <th>Count</th>
                                 </tr>
-                            </thead>
-                            <tbody>
-                            {this.state.regionTable.rows}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                {this.state.regionTable.rows}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div className={'col'}>
                         <div className={'h4 mb-2'}>Sub-Regions</div>
-                        <table className={'w-100 table table-bordered table-striped table-hover table-sm'}>
-                            <thead>
+                        <div className={'regions-table-wrap'}>
+                            <table className={'w-100 table table-bordered table-striped table-hover table-sm'}>
+                                <thead>
                                 <tr>
                                     <th>Name</th>
                                     <th>Count</th>
                                 </tr>
-                            </thead>
-                            <tbody>
-                            {this.state.subregionTable.rows}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                {this.state.subregionTable.rows}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -212,6 +225,16 @@ class App extends Component{
             this.setState({errorMessage: 'Search field cannot be empty'});
             this.setState({searchValue: ''});
         }
+    }
+
+    searchFocus(evt) {
+        let search = evt.target.parentElement;
+        search.classList.add('search-bar--focus')
+    }
+
+    searchUnfocus(evt) {
+        let search = evt.target.parentElement;
+        search.classList.remove('search-bar--focus')
     }
 
     getCountries(url) {

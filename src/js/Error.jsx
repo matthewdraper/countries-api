@@ -16,7 +16,9 @@ class Error extends Component {
         }
 
         return (
-            <div className={classes.join(' ')}>{this.props.text}</div>
+            <div class={'alert-wrapper'}>
+                <div className={classes.join(' ')}>{this.props.text}</div>
+            </div>
         );
     }
 

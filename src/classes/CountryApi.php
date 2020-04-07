@@ -5,19 +5,13 @@ namespace CountryApi;
 require_once 'InvalidApiResponseException.php';
 
 
-use GuzzleHttp\Client;
-
 class CountryApi
 {
-    /** @var Client */
-    private $client;
-
     /**
      * CountryApi constructor.
      */
     public function __construct()
     {
-        $this->client = new Client();
     }
 
     public function all($fields = [], $orderBy = null)
@@ -38,64 +32,62 @@ class CountryApi
         $this->generateSearchResponse($paths, $fields, $orderBy, [200, 404]);
     }
 
-    public function name($name, $fullName = false, $fields = [], $orderBy)
+    public function name($name, $fullName = false, $fields = [], $orderBy = [])
     {
         $path = '/name/' . urlencode($name);
         $path = $fullName ? $path . '?fullText=true' : $path;
         $this->generateResponse($path, $fields, $orderBy);
     }
 
-    public function code($isoCode, $fields = [])
+    public function code($isoCode, $fields = [], $orderBy = [])
     {
-        $this->generateResponse($this->buildApiUrl('/alpha/' . urlencode($isoCode)), $fields);
+        $this->generateResponse($this->buildApiUrl('/alpha/' . urlencode($isoCode)), $fields, $orderBy);
     }
 
-    public function codes(array $isoCodes, $fields = [])
+    public function codes(array $isoCodes, $fields = [], $orderBy = [])
     {
         $this->generateResponse(
-            $this->buildApiUrl('/alpha?codes=' . urlencode(implode(';', $isoCodes)), $fields)
+            $this->buildApiUrl('/alpha?codes=' . urlencode(implode(';', $isoCodes))), $fields, $orderBy
         );
     }
 
-    public function currency($currency, $fields = [])
+    public function currency($currency, $fields = [], $orderBy = [])
     {
-        $this->generateResponse($this->buildApiUrl('/currency/' . urlencode($currency)), $fields);
+        $this->generateResponse($this->buildApiUrl('/currency/' . urlencode($currency)), $fields, $orderBy);
     }
 
-    public function language($language, $fields = [])
+    public function language($language, $fields = [], $orderBy = [])
     {
-        $this->generateResponse($this->buildApiUrl('/lang/' . urlencode($language)), $fields);
+        $this->generateResponse($this->buildApiUrl('/lang/' . urlencode($language)), $fields, $orderBy);
     }
 
-    public function capital($capital, $fields = [])
+    public function capital($capital, $fields = [], $orderBy = [])
     {
-        $this->generateResponse($this->buildApiUrl('/capital/' . urlencode($capital)), $fields);
+        $this->generateResponse($this->buildApiUrl('/capital/' . urlencode($capital)), $fields, $orderBy);
     }
 
-    public function callingCode($callingCode, $fields = [])
+    public function callingCode($callingCode, $fields = [], $orderBy = [])
     {
-        $this->generateResponse($this->buildApiUrl('/callingCode/' . urlencode($callingCode)), $fields);
+        $this->generateResponse($this->buildApiUrl('/callingCode/' . urlencode($callingCode)), $fields, $orderBy);
     }
 
-    public function region($region, $fields = [])
+    public function region($region, $fields = [], $orderBy = [])
     {
-        $this->generateResponse($this->buildApiUrl('/region/' . urlencode($region)), $fields);
+        $this->generateResponse($this->buildApiUrl('/region/' . urlencode($region)), $fields, $orderBy);
 
     }
 
-    public function regionalBloc($regionalBloc, $fields = [])
+    public function regionalBloc($regionalBloc, $fields = [], $orderBy = [])
     {
-        $this->generateResponse($this->buildApiUrl('/regionalbloc/' . urlencode($regionalBloc), $fields));
+        $this->generateResponse($this->buildApiUrl('/regionalbloc/' . urlencode($regionalBloc)), $fields, $orderBy);
     }
 
-    private function buildApiUrl($path, $fields = [])
+    private function buildApiUrl($path)
     {
-        $fields = !empty($fields) ? implode(';', $fields) : $fields;
-        $url = getenv('COUNTRY_API_URL') . $path;
-        return !empty($fields) ? $url . '?fields=' . urlencode($fields) : $url;
+        return getenv('COUNTRY_API_URL') . $path;
     }
 
-    private function generateResponse($url, $fields = [], $orderBy, $expectedResponse = 200)
+    private function generateResponse($url, $fields = [], $orderBy = [], $expectedResponse = 200)
     {
         try {
             if(!empty($fields)){
@@ -188,7 +180,7 @@ class CountryApi
     /**
      * @param $url
      * @param int $expectedStatusCode
-     * @return bool|string
+     * @return array
      * @throws InvalidApiResponseException
      * @throws CurlException
      */
