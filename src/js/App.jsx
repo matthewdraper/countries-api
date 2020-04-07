@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Error from "./Error";
 import axios from 'axios';
 
 class App extends Component{
@@ -6,6 +7,7 @@ class App extends Component{
     constructor() {
         super();
         this.state = {
+            errorMessage: '',
             totalCountries: 0,
             countries: [],
             regions: [],
@@ -30,10 +32,12 @@ class App extends Component{
         return(
             <div className={'container'}>
                 <h1 className={'mt-5 mb-3'}>Country Search</h1>
+                <Error text={this.state.errorMessage} />
                 <div className={'search-bar form-group my-3'}>
-                    <input placeholder={'Search by name or ISO abbreviation'} className={'search-bar__input form-control'} value={this.state.searchValue} onChange={evt => this.updateSearchValue(evt)} onKeyPress={evt => this.keyPressed(evt)}/>
-                    <button className={'search-bar__input btn btn-primary'} onClick={evt => { this.updateSearchValue(evt); this.search();}}>Search</button>
+                    <input placeholder={'Search by name or ISO abbreviation'} className={'search-bar__input form-control'} value={this.state.searchValue} onChange={evt => this.updateSearchValue(evt)} onMouseLeave={evt => this.updateSearchValue(evt)} onKeyPress={evt => this.keyPressed(evt)}/>
+                    <button className={'search-bar__input btn btn-primary'} onClick={evt => { this.search();}}><i className={'fas fa-search'}></i></button>
                 </div>
+                <div className={'h4 my-3'}>Countries</div>
                 <table className={'w-100 table table-bordered table-striped table-hover table-sm'}>
                     <thead>
                         <tr>
@@ -52,17 +56,31 @@ class App extends Component{
                         {this.state.countryTable.rows}
                     </tbody>
                 </table>
-                <div className={'totals h4 mb-3'}>Total Countries: {this.state.totalCountries}</div>
+                <div className={'totals h4 my-5'}>Total Countries: {this.state.totalCountries}</div>
                 <div className={'row'}>
                     <div className={'col'}>
+                        <div className={'h4 mb-2'}>Regions</div>
                         <table className={'w-100 table table-bordered table-striped table-hover table-sm'}>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
                             <tbody>
                             {this.state.regionTable.rows}
                             </tbody>
                         </table>
                     </div>
                     <div className={'col'}>
+                        <div className={'h4 mb-2'}>Sub-Regions</div>
                         <table className={'w-100 table table-bordered table-striped table-hover table-sm'}>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
                             <tbody>
                             {this.state.subregionTable.rows}
                             </tbody>
@@ -78,6 +96,9 @@ class App extends Component{
     }
 
     keyPressed(evt) {
+        this.setState({
+            searchValue: evt.target.value
+        })
         if (evt.key === "Enter") {
             this.search()
         }
@@ -185,12 +206,19 @@ class App extends Component{
     }
 
     search() {
-        this.getCountries('api/index.php?search=' + encodeURI(this.state.searchValue));
+        if(this.state.searchValue.trim() !== '' && this.state.searchValue !== undefined && this.state.searchValue !== null){
+            this.getCountries('api/index.php?search=' + encodeURI(this.state.searchValue));
+        } else {
+            this.setState({errorMessage: 'Search field cannot be empty'});
+            this.setState({searchValue: ''});
+        }
     }
 
     getCountries(url) {
         axios(url).then(result => {
-            if(result.status === 200) {
+            if(result.status === 200 && result.data.status === 200) {
+                this.setState({errorMessage: ''});
+
                 let payload = result.data.payload;
 
 
@@ -213,6 +241,8 @@ class App extends Component{
                 this.setState({countryTable: {rows: this.createCountryTableRows()}});
                 this.setState({regionTable: {rows: this.createRegionTableRows()}});
                 this.setState({subregionTable: {rows: this.createSubregionTableRows()}});
+            } else {
+                this.setState({errorMessage: 'There were no countries matching "' + this.state.searchValue + '"'});
             }
         });
     }
