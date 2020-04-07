@@ -1,5 +1,5 @@
 # Countries API Demo
-I build this out using React as the main Js framework. There are some files that I would not normally commit to the 
+I built this out using React as the main Js framework. There are some files that I would not normally commit to the 
 repo, such as the `.env`. I did this to make it easier to run.
 
 
