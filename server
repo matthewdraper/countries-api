@@ -1,3 +1,5 @@
 #!/bin/bash
+npm install
 npm run build
+composer install
 php -S localhost:8765 -t webroot/
