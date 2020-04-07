@@ -25,11 +25,24 @@ class CountryApi
         $this->generateResponse(getenv('COUNTRY_API_URL') . '/all', $fields, $orderBy);
     }
 
-    public function name($name, $fullName = false, $fields = [])
+    public function search($search, $fields, $orderBy = [])
+    {
+        $search = trim($search);
+
+        if(strlen($search) >= 2 && strlen($search) <= 3) {
+            $paths[] = $this->buildApiUrl('/alpha/' . $search);
+        } else {
+            $paths[] = $this->buildApiUrl('/name/' . $search);
+        }
+
+        $this->generateSearchResponse($paths, $fields, $orderBy, [200, 404]);
+    }
+
+    public function name($name, $fullName = false, $fields = [], $orderBy)
     {
         $path = '/name/' . urlencode($name);
         $path = $fullName ? $path . '?fullText=true' : $path;
-        $this->generateResponse($path, $fields);
+        $this->generateResponse($path, $fields, $orderBy);
     }
 
     public function code($isoCode, $fields = [])
@@ -78,7 +91,7 @@ class CountryApi
     private function buildApiUrl($path, $fields = [])
     {
         $fields = !empty($fields) ? implode(';', $fields) : $fields;
-        $url = getenv('COUNTRY_API_URL') . urlencode($path);
+        $url = getenv('COUNTRY_API_URL') . $path;
         return !empty($fields) ? $url . '?fields=' . urlencode($fields) : $url;
     }
 
@@ -95,6 +108,52 @@ class CountryApi
         }
     }
 
+    private function generateSearchResponse($urls, $fields = [], $orderBy = [], $expectedResponse = 200)
+    {
+        try {
+            $responses = [];
+            $params = '';
+            if(!empty($fields)){
+                $params = '?fields=' . urlencode(implode(';', $fields));
+            }
+            foreach ($urls as $url) {
+                $url .= $params;
+                $response = $this->makeApiRequest($url, $expectedResponse);
+                $response = !is_array($response) && is_object($response) ? [$response] : $response;
+                if(!empty($response)) {
+                    $responses = array_merge($response, $responses);
+                }
+            }
+            $responses = array_unique($responses, SORT_REGULAR);
+            $responseCode = !empty($responses) ? 200 : 404;
+            $responseMessage = !empty($responses) ? 'OK' : 'Not Found';
+            $this->generateJsonResponse((array)$responses, $orderBy, $responseCode, $responseMessage);
+        } catch (\Exception $e) {
+            $this->internalServerError($e);
+        }
+    }
+
+    private function sort($orderBy, &$responses){
+        if(!empty($orderBy) && array_key_exists(array_key_first($orderBy), $responses[0])) {
+            $key = array_key_first($orderBy);
+            if(strtoupper($orderBy[$key] === 'ASC')) {
+                usort($responses, function ($a, $b) use ($orderBy, $key) {
+                    if($a->$key == $b->$key) {
+                        return 0;
+                    }
+                    return $a->$key < $b->$key ? -1 : 1;
+                });
+            } elseif(strtoupper($orderBy[array_key_first($orderBy)]) === 'DESC') {
+                usort($responses, function ($a, $b) use ($orderBy, $key) {
+                    if($a->$key == $b->$key) {
+                        return 0;
+                    }
+                    return $a->$key > $b->$key ? -1 : 1;
+                });
+            }
+        }
+    }
+
     private function internalServerError(\Exception $e)
     {
         http_response_code(500);
@@ -106,38 +165,22 @@ class CountryApi
 
     private function generateJsonResponse($payload = [], $orderBy = null, $status = 200, $message = 'OK')
     {
-        if(!empty($orderBy) && array_key_exists(array_key_first($orderBy), $payload[0])) {
-            $key = array_key_first($orderBy);
-            if(strtoupper($orderBy[$key] === 'ASC')) {
-                usort($payload, function ($a, $b) use ($orderBy, $key) {
-                    if($a->$key == $b->$key) {
-                        return 0;
-                    }
-                    return $a->$key < $b->$key ? -1 : 1;
-                });
-            } elseif(strtoupper($orderBy[array_key_first($orderBy)]) === 'DESC') {
-                usort($payload, function ($a, $b) use ($orderBy, $key) {
-                    if($a->$key == $b->$key) {
-                        return 0;
-                    }
-                    return $a->$key > $b->$key ? -1 : 1;
-                });
-            }
-
+        if(!empty($orderBy)) {
+            $this->sort($orderBy, $payload);
         }
 
-        http_response_code(intval($status));
+        http_response_code(intval(200));
         if(getenv('ENVIRONMENT') !== 'development') {
             die(json_encode([
                 'status' => $status,
                 'message' => $message,
-                'payload' => $payload
+                'payload' => (array)$payload
             ]));
         } else {
             die(json_encode([
                 'status' => $status,
                 'message' => $message,
-                'payload' => $payload,
+                'payload' => (array)$payload,
             ], JSON_PRETTY_PRINT));
         }
     }
@@ -163,6 +206,7 @@ class CountryApi
         ));
 
         $response = curl_exec($curl);
+
         $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         $error = curl_error($curl);
 
@@ -172,11 +216,20 @@ class CountryApi
             throw new CurlException("cURL error = \"{$error}\" when making request to Country API at {$url}");
         }
 
-        if($statusCode !== $expectedStatusCode) {
+        if((is_array($expectedStatusCode) && !in_array($statusCode, $expectedStatusCode))
+            || (!is_array($expectedStatusCode) && $statusCode !== $expectedStatusCode)) {
+            if(is_array($expectedStatusCode)){
+                $expectedStatusCode = implode(', ', $expectedStatusCode);
+            }
             throw new InvalidApiResponseException("Invalid Country API Response: API returned a response with status code {$statusCode} instead of the expected status code of {$expectedStatusCode}");
         }
 
+        $response = json_decode($response);
 
-        return json_decode($response);
+        if(!is_array($response) && $response->status === 404){
+            return [];
+        }
+
+        return $response;
     }
 }
